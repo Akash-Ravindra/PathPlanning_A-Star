@@ -11,11 +11,12 @@ import tkinter
 Custom data type to store each node
 '''
 class Node:
-    def __init__(self,position = [0,0], parent = None, cost = np.inf,is_visited = None,hue = np.inf):
+    def __init__(self,position = [0,0,0], parent = None, cost = np.inf,is_visited = None,hue = np.inf,threshold = 0.5):
         self.__attrdict = {"position":np.array(position),"parent":np.array(parent),"cost":cost,"is_visited":is_visited,"heuristic":hue }
+        self.thresh = 0.5
 
     '''set the position of the state'''
-    def set_position(self,position = np.zeros([1,2])):
+    def set_position(self,position = np.zeros([1,3])):
         self.__attrdict['position'] = np.array(position)
     '''Get the position of the current node'''
     def get_position(self):
@@ -42,15 +43,12 @@ class Node:
         self.__attrdict['cost'] = cost
     def get_cost(self):
         return self.__attrdict['cost']
+    
+    
     def set_heuristic(self,hue):
         self.__attrdict['heuristic'] = hue
     def get_heuristic(self):
         return self.__attrdict['heuristic']
-    def get_total_cost(self):
-        # if self.__attrdict['heuristic']==np.inf:
-        #     return self.__attrdict['cost']
-        return self.__attrdict['heuristic']+self.__attrdict['cost']
-    
     def calculate_heuristic(self,coords,set = True):
         dist = np.linalg.norm(self.__attrdict['position']-np.asarray(coords))
         if set:
@@ -58,12 +56,20 @@ class Node:
             return dist
         else:
             return dist
-            
+     
+    def get_orientation(self):
+        return self.__attrdict['position'][-1]*30
+    def get_total_cost(self):
+        # if self.__attrdict['heuristic']==np.inf:
+        #     return self.__attrdict['cost']
+        return self.get_heuristic()+self.get_cost()
+    
+    
     '''Get cartisian coordinates of each node'''
     def get_cartisian(self):
-        x,y = self.get_position()
+        x,y,theta = self.get_position()
         x,y = y,x
-        return np.array((x,Maze.lim_x-y))
+        return np.array((x*Maze.thresh_xy,((Maze.lim_x*(1/Maze.thresh_xy))-y)*Maze.thresh_xy))
 
 
     '''Overload the == operator to compare two states'''
@@ -71,10 +77,10 @@ class Node:
         return np.equal(self.get_position(),node.get_position()).all()
     '''Overload the str to print the object'''
     def __str__(self) -> str:
-        return "Self: "+str(self.get_cartisian())+" Parent: "+str(self.get_parent())+" Cost: "+str(self.get_cost())
+        return "Self: "+str(self.get_cartisian())+" Angle-"+str(self.get_orientation())+" Parent: "+str(self.get_parent())+" Cost: "+str(self.get_cost())
     '''Overload the str to print the object'''
     def __repr__(self) -> str:
-        return (str(self.get_cartisian()))+'\n'
+        return (str(self.get_cartisian())+" Angle-"+str(self.get_orientation()))+'\n'
     def __gt__(self,value):
         return (self.get_total_cost()>value)
     def __lt__(self,value):
@@ -82,16 +88,16 @@ class Node:
 
 
 class Maze:
-    action_set = {'u':np.array([-1,0]),'d':np.array([1,0]),\
-                  'l':np.array([0,-1]),'r':np.array([0,1]),\
-                  'ul':np.array([-1,-1]),'ur':np.array([-1,1]),\
-                  'dl':np.array([1,-1]),'dr':np.array([1,1])} ##action set dict, used to append add to the current index
+    action_set = {'-60':-2,'-30':-1,\
+                  '0':0,'30':1,\
+                  '60':2} ##action set dict, used to append add to the current index
     lim_x = 250## xlimit in terms of array
     lim_y = 400## Y limit in terms of array
+    thresh_xy = 0.5
     anime_fig=None
     fig,ax = None,None
     scatter=None
-    def __init__(self,padding = 5,radius = 0,cost:dict = {'u':1,'d':1,'l':1,'r':1,'ur':1.4,'ul':1.4,'dr':1.4,'dl':1.4},verbose=True) -> None:
+    def __init__(self,padding = 5,radius = 0,cost:dict = {'-60':1,'-30':1,'0':1,'30':1,'60':1},verbose=True,step = 1) -> None:
         self.__cost = cost              ## Cost for each action
         self.__padding = padding+radius ##padding for the robot
         self.__open_list = PriorityQueue()           ##Open list containing the accessable nodes
@@ -99,16 +105,19 @@ class Maze:
         self.path = []
         self.start_goal = []
         self.verbose = verbose
+        self.step_size = step
 
     def solve_maze(self,start,goal):
         print(('-'*50)+"\n\t\tInitializing Maze\n"+('-'*50))
-        self.__maze = np.array([[Node([x,y])for y in range(Maze.lim_y+1)]
-                                for x in range(Maze.lim_x+1)]
+        self.__maze = np.array([[[Node([x,y,th],threshold=Maze.thresh_xy)for th in range(12)] for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
+                                for x in range(int((Maze.lim_x*(1/Maze.thresh_xy))+1))]
                                ,dtype=Node) ##Empty np array with X*Y Node objects
         ## Update the maze array with the presence of the obstacles
+        
         self.update_maze_arrow()
         self.update_maze_circle()
         self.update_maze_hexagon()
+        return
         ## Convert the cartisian coordinates to array frame
         start = self.cartisian_to_idx(list(start))
         goal = self.cartisian_to_idx(list(goal))
@@ -227,15 +236,19 @@ class Maze:
     def idx_to_cartisian(self, xy):
         xy = list(xy)
         xy[0],xy[1] = xy[1],xy[0]
-        xy[1] = abs(xy[1]-Maze.lim_x)
-        return (xy[0],xy[1])
+        xy[1] = abs(xy[1]-(Maze.lim_x*(1/Maze.thresh_xy)))
+        return (xy[0]*Maze.thresh_xy,xy[1]*Maze.thresh_xy)
+    
+    def cartisian_cleaner(self,xy):
+        xy = list(xy)
+        return ((math.ceil(xy[0]*2))/2.0,(math.ceil(xy[1]*2))/2.0 )
     
     ## HELPER, Converts cartisian to idx
     def cartisian_to_idx(self, xy):
-        xy = list(xy)
+        xy = list(self.cartisian_cleaner(xy))
         xy[0],xy[1] = xy[1],xy[0]
-        xy[0] = Maze.lim_x - xy[0]
-        return (xy[0],xy[1])
+        xy[0] = (Maze.lim_x - xy[0])*(1/Maze.thresh_xy)
+        return (xy[0],xy[1]*(1/Maze.thresh_xy))
     ## HELPER, converts cartisian to tkinter coordinates, top left corner is 0,0 , top right corner is 400,0
     def cartisian_to_game(self, xy):
         xy = list(xy)
@@ -291,14 +304,14 @@ class Maze:
         
         x = x.T
         padding = int(self.__padding)
-        xx,yy = np.ogrid[:251,:401]
+        xx,yy = np.ogrid[:(Maze.lim_x*(1/Maze.thresh_xy))+1,:(Maze.lim_y*(1/Maze.thresh_xy))+1]
         ## Remove nodes that are in the obstacle +padding in all directions
         for yi in y[0]:
             for xi in x[0]:
                 if self._is_in_circle((xi,yi)):
                     idx,idy = self.cartisian_to_idx((xi,yi))
-                    mask = (xx-idx)**2 + (yy-idy)**2 - padding**2<=0
-                    self.__maze[mask] = None 
+                    mask = (xx-idx)**2 + (yy-idy)**2 - (padding*(1/Maze.thresh_xy))**2<=0
+                    self.__maze[mask,:] = None 
         pass
     
     ## Check each element of the maze that falls in the bounding box of the obstacle 
@@ -312,14 +325,14 @@ class Maze:
         
         x = x.T
         padding = int(self.__padding)
-        xx,yy = np.ogrid[:251,:401]
+        xx,yy = np.ogrid[:(Maze.lim_x*(1/Maze.thresh_xy))+1,:(Maze.lim_y*(1/Maze.thresh_xy))+1]
         # Remove nodes that are in the obstacle +padding in all directions
         for yi in y[0]:
             for xi in x[0]:
                 if self._is_in_arrow((xi,yi)):
                     idx,idy = self.cartisian_to_idx((xi,yi))
-                    mask = (xx-idx)**2 + (yy-idy)**2 - padding**2<=0
-                    self.__maze[mask] = None 
+                    mask = (xx-idx)**2 + (yy-idy)**2 - (padding*(1/Maze.thresh_xy))**2<=0
+                    self.__maze[mask,:] = None 
         pass
     ## Check each element of the maze that falls in the bounding box of the obstacle 
     def update_maze_hexagon(self):
@@ -332,14 +345,14 @@ class Maze:
         
         x = x.T
         padding = int(self.__padding)
-        xx,yy = np.ogrid[:251,:401]
+        xx,yy = np.ogrid[:(Maze.lim_x*(1/Maze.thresh_xy))+1,:(Maze.lim_y*(1/Maze.thresh_xy))+1]
         # Remove nodes that are in the obstacle +padding in all directions
         for yi in y[0]:
             for xi in x[0]:
                 if self._is_in_hexagon((xi,yi)):
                     idx,idy = self.cartisian_to_idx((xi,yi))
-                    mask = (xx-idx)**2 + (yy-idy)**2 - padding**2<=0
-                    self.__maze[mask] = None 
+                    mask = (xx-idx)**2 + (yy-idy)**2 - (padding*(1/Maze.thresh_xy))**2<=0
+                    self.__maze[mask,:] = None 
         pass
     
     # Plot the completed path as an animation
