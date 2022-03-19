@@ -11,9 +11,9 @@ import tkinter
 Custom data type to store each node
 '''
 class Node:
-    def __init__(self,position = [0,0,0], parent = None, cost = np.inf,is_visited = None,hue = np.inf,threshold = 0.5):
+    def __init__(self,position = [0,0,0], parent = None, cost = np.inf,is_visited = None,hue = np.inf, threshold = 0.5):
         self.__attrdict = {"position":np.array(position),"parent":np.array(parent),"cost":cost,"is_visited":is_visited,"heuristic":hue }
-        self.thresh = 0.5
+        self.thresh = threshold
 
     '''set the position of the state'''
     def set_position(self,position = np.zeros([1,3])):
@@ -57,8 +57,13 @@ class Node:
         else:
             return dist
      
+    ## Return the angle of the node as a whole of 
     def get_orientation(self):
         return self.__attrdict['position'][-1]*30
+    ## Return the angle of the node as the plane number
+    def get_angle(self):
+        return self.__attrdict['position'][-1]
+    
     def get_total_cost(self):
         # if self.__attrdict['heuristic']==np.inf:
         #     return self.__attrdict['cost']
@@ -117,17 +122,18 @@ class Maze:
         self.update_maze_arrow()
         self.update_maze_circle()
         self.update_maze_hexagon()
-        return
+
         ## Convert the cartisian coordinates to array frame
-        start = self.cartisian_to_idx(list(start))
-        goal = self.cartisian_to_idx(list(goal))
+        start = self.cartisian_to_idx(list(start)) + (start[-1],)
+        goal = self.cartisian_to_idx(list(goal))+ (goal[-1],)
         self.start_goal.append(start)
         self.start_goal.append(goal)
+        
         ## Check if the start and goal are accessable
-        if(self.start_goal[0][0]<0 or self.start_goal[0][0]>Maze.lim_x or self.start_goal[0][1]>Maze.lim_y or self.start_goal[0][1]<0 or type(self.__maze[start])==type(None)):
+        if(self.start_goal[0][0]<0 or self.start_goal[0][0]>(Maze.lim_x/self.thresh_xy) or self.start_goal[0][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[0][1]<0 or self.start_goal[0][2]<0 or self.start_goal[0][2]>11 or type(self.__maze[start])==type(None)):
             print("Start Node inside a Obstacle or out of bounds")
             return False
-        if(self.start_goal[-1][0]<0 or self.start_goal[-1][0]>Maze.lim_x or self.start_goal[-1][1]>Maze.lim_y or self.start_goal[-1][1]<0 or type(self.__maze[goal])==type(None)):
+        if(self.start_goal[-1][0]<0 or self.start_goal[-1][0]>(Maze.lim_x/self.thresh_xy) or self.start_goal[-1][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[-1][1]<0 or self.start_goal[-1][2]<0 or self.start_goal[-1][2]>11 or type(self.__maze[goal])==type(None)):
             print("Goal Node inside a Obstacle or out of bounds")
             return False
         print(('-'*50)+"\n\t\tStarting search\n"+('-'*50))
@@ -142,7 +148,7 @@ class Maze:
             if(self.__open_list.empty()):
                 print("Queue empty - no more nodes to explore. Stoping search")
                 break
-            # look around the first node in the open list
+            # look around the first node in the open list NoI = NodeOfInterest
             NoI = self.__open_list.get()
             NoI.set_is_visited()
             
@@ -153,7 +159,9 @@ class Maze:
             
             if(self.verbose):
                 print(NoI)
-            self.look_around(NoI.get_position())
+            # self.look_around(NoI.get_position())
+            self.perform_actions(NoI, NoI.get_orientation())
+            break
             # Add the first node to the closed list and pop it from open list
             self.__close_list.append(NoI)
         return True
@@ -182,7 +190,38 @@ class Maze:
         print(('-'*50)+"\n\t\tBackTrack Complete\n"+('-'*50)+"\n")            
         return self.path
                         
-        
+    def perform_actions(self,node:Node, ori):
+        ## Find all the actions that are possible from the current node
+        actions = ori+(np.array(list(Maze.action_set.values()))*30)
+        print(actions)
+        for action in actions:
+            ## Get the next point based on the current point and the action angle
+            end_point_idx = self.vec_endpoint(node.get_cartisian(),action,self.step_size)
+            ## Check if the point is in the maze
+            if(end_point_idx[0]<0 or end_point_idx[0]>(self.lim_y/self.thresh_xy) or end_point_idx[1]<0 or end_point_idx[1]>(self.lim_x/self.thresh_xy)):
+                continue
+            ## Calculate the plane based on the action taken
+            angle = action/30
+            if(angle>11 or angle<0):
+                angle = np.abs(angle)-12
+            child_node = end_point_idx + (int(angle),)
+            parent_node = tuple(node.get_cartisian()) + (int(node.get_angle()),)
+            ## check if the point is in the point in an obstacle
+            if(self.__maze[child_node] and not self.__maze[child_node].get_is_visited()):
+                ## If not then add it to the list
+                self.add_to_list(parent_node,child_node,1)
+            
+            
+            
+            
+        pass
+    ## Gives the index of the point along a specific angle and magnitude from a given point
+    def vec_endpoint(self,start_point, angle, magnitude=1):
+        x = np.cos(angle)*magnitude + start_point[0]
+        y= np.sin(angle)*magnitude+ start_point[1]
+        return self.cartisian_to_idx((x,y))
+        pass
+    
     ##Look around the POI
     def look_around(self,points:np.ndarray):
         #itr through all the possible actions
@@ -248,7 +287,7 @@ class Maze:
         xy = list(self.cartisian_cleaner(xy))
         xy[0],xy[1] = xy[1],xy[0]
         xy[0] = (Maze.lim_x - xy[0])*(1/Maze.thresh_xy)
-        return (xy[0],xy[1]*(1/Maze.thresh_xy))
+        return (int(xy[0]),int(xy[1]*(1/Maze.thresh_xy)))
     ## HELPER, converts cartisian to tkinter coordinates, top left corner is 0,0 , top right corner is 400,0
     def cartisian_to_game(self, xy):
         xy = list(xy)
