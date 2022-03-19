@@ -130,10 +130,14 @@ class Maze:
         self.start_goal.append(goal)
         
         ## Check if the start and goal are accessable
-        if(self.start_goal[0][0]<0 or self.start_goal[0][0]>(Maze.lim_x/self.thresh_xy) or self.start_goal[0][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[0][1]<0 or self.start_goal[0][2]<0 or self.start_goal[0][2]>11 or type(self.__maze[start])==type(None)):
+        if(self.start_goal[0][0]<0 or self.start_goal[0][0]>(Maze.lim_x/self.thresh_xy)\
+            or self.start_goal[0][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[0][1]<0 \
+                or self.start_goal[0][2]<0 or self.start_goal[0][2]>11 or type(self.__maze[start])==type(None)):
             print("Start Node inside a Obstacle or out of bounds")
             return False
-        if(self.start_goal[-1][0]<0 or self.start_goal[-1][0]>(Maze.lim_x/self.thresh_xy) or self.start_goal[-1][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[-1][1]<0 or self.start_goal[-1][2]<0 or self.start_goal[-1][2]>11 or type(self.__maze[goal])==type(None)):
+        if(self.start_goal[-1][0]<0 or self.start_goal[-1][0]>(Maze.lim_x/self.thresh_xy)\
+            or self.start_goal[-1][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[-1][1]<0\
+                or self.start_goal[-1][2]<0 or self.start_goal[-1][2]>11 or type(self.__maze[goal])==type(None)):
             print("Goal Node inside a Obstacle or out of bounds")
             return False
         print(('-'*50)+"\n\t\tStarting search\n"+('-'*50))
@@ -161,7 +165,6 @@ class Maze:
                 print(NoI)
             # self.look_around(NoI.get_position())
             self.perform_actions(NoI, NoI.get_orientation())
-            break
             # Add the first node to the closed list and pop it from open list
             self.__close_list.append(NoI)
         return True
@@ -193,32 +196,32 @@ class Maze:
     def perform_actions(self,node:Node, ori):
         ## Find all the actions that are possible from the current node
         actions = ori+(np.array(list(Maze.action_set.values()))*30)
-        print(actions)
         for action in actions:
             ## Get the next point based on the current point and the action angle
             end_point_idx = self.vec_endpoint(node.get_cartisian(),action,self.step_size)
             ## Check if the point is in the maze
-            if(end_point_idx[0]<0 or end_point_idx[0]>(self.lim_y/self.thresh_xy) or end_point_idx[1]<0 or end_point_idx[1]>(self.lim_x/self.thresh_xy)):
+            if(end_point_idx[0]<0 or end_point_idx[0]>(self.lim_x/self.thresh_xy) \
+               or end_point_idx[1]<0 or end_point_idx[1]>(self.lim_y/self.thresh_xy)):
                 continue
             ## Calculate the plane based on the action taken
             angle = action/30
             if(angle>11 or angle<0):
-                angle = np.abs(angle)-12
+                angle = np.abs(np.abs(angle)-12)
             child_node = end_point_idx + (int(angle),)
-            parent_node = tuple(node.get_cartisian()) + (int(node.get_angle()),)
+            parent_node = tuple(node.get_position())
             ## check if the point is in the point in an obstacle
             if(self.__maze[child_node] and not self.__maze[child_node].get_is_visited()):
                 ## If not then add it to the list
+                # print(child_node,parent_node)
                 self.add_to_list(parent_node,child_node,1)
-            
-            
-            
-            
         pass
     ## Gives the index of the point along a specific angle and magnitude from a given point
     def vec_endpoint(self,start_point, angle, magnitude=1):
-        x = np.cos(angle)*magnitude + start_point[0]
-        y= np.sin(angle)*magnitude+ start_point[1]
+        x = np.cos(np.deg2rad(angle))*magnitude + start_point[0]
+        y = np.sin(np.deg2rad(angle))*magnitude+ start_point[1]
+        # print(start_point,self.cartisian_cleaner((x,y)),angle)
+        if(x<0 or y<0 or x>Maze.lim_y/self.thresh_xy or y > Maze.lim_x/self.thresh_xy):
+            return (-1,-1)
         return self.cartisian_to_idx((x,y))
         pass
     
@@ -247,7 +250,8 @@ class Maze:
             self.__maze[child].set_cost(cost+self.__maze[parent].get_cost())
             ## Set the new parent of the node
             self.__maze[child].set_parent(parent)
-            
+            ## Set its visited
+            self.__maze[child].set_is_visited()
             ## Add the node to the open list
             self.__open_list.put(self.__maze[child])
             # print("open list : ",self.__open_list,list(map(Node.get_cost,self.__open_list)))
