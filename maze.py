@@ -51,8 +51,10 @@ class Node:
         return self.__attrdict['heuristic']
     
     def calculate_heuristic(self,coords,set = True): 
+        ## Euclidian Hue
         dist = np.linalg.norm(self.__attrdict['position'][:-1]-np.asarray(coords)[:-1])
-        dist = dist if dist>1.5 else 0
+        dist = dist if dist>1.5/self.thresh else 0
+        ## Add goal hue
         dist = dist+np.linalg.norm(self.__attrdict['position'][-1]-np.asarray(coords)[-1])
         if set:
             self.set_heuristic(dist)
@@ -117,7 +119,8 @@ class Maze:
 
     def solve_maze(self,start,goal):
         print(('-'*50)+"\n\t\tInitializing Maze\n"+('-'*50))
-        self.__maze = np.array([[[Node([x,y,th],threshold=Maze.thresh_xy)for th in range(12)] for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
+        self.__maze = np.array([[[Node([x,y,th],threshold=Maze.thresh_xy)for th in range(12)]
+                                 for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
                                 for x in range(int((Maze.lim_x*(1/Maze.thresh_xy))+1))]
                                ,dtype=Node) ##Empty np array with X*Y Node objects
         ## Update the maze array with the presence of the obstacles
@@ -146,7 +149,6 @@ class Maze:
         print(('-'*50)+"\n\t\tStarting search\n"+('-'*50))
         ## Set the cost of the start node to zero
         self.__maze[start].set_cost(0)
-        self.__maze[start].set_is_visited()
         ## Apppend the start node and end node into list
         self.__open_list.put(self.__maze[start])
         self.__open_list.put(self.__maze[goal])
@@ -208,10 +210,13 @@ class Maze:
                or end_point_idx[1]<0 or end_point_idx[1]>(self.lim_y/self.thresh_xy)):
                 continue
             ## Calculate the plane based on the action taken
+            ### NEEDS TO CHANGE
             angle = action/30
             if(angle>11 or angle<0):
                 angle = np.abs(np.abs(angle)-12)
             print("ori",ori,angle)
+            
+            
             child_node = end_point_idx + (int(angle),)
             parent_node = tuple(node.get_position())
             ## check if the point is in the point in an obstacle
@@ -225,12 +230,16 @@ class Maze:
         x = np.cos(np.deg2rad(angle))*(magnitude*self.thresh_xy) + start_point[0]
         y = np.sin(np.deg2rad(angle))*(magnitude*self.thresh_xy)+ start_point[1]
         # print(start_point,self.cartisian_cleaner((x,y)),angle)
+        
+        ### NEED TO CHeck
         if(x<0 or y<0 or x>Maze.lim_y/self.thresh_xy or y > Maze.lim_x/self.thresh_xy):
             return (-1,-1)
+        
         return self.cartisian_to_idx((x,y))
         pass
     
     ##Look around the POI
+    '''
     def look_around(self,points:np.ndarray):
         #itr through all the possible actions
         actions = tuple(points+np.array(list(Maze.action_set.values())))
@@ -242,7 +251,7 @@ class Maze:
                     ### check if the node is an obstacle
                     self.add_to_list(points,action,self.__cost[key])
                     ### First time coming here, check if it is an obstacle
-                  
+    '''
         
     ## Add to open list and update node parameters
     def add_to_list(self,parent,child,cost):
