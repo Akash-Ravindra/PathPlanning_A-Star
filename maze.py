@@ -49,8 +49,11 @@ class Node:
         self.__attrdict['heuristic'] = hue
     def get_heuristic(self):
         return self.__attrdict['heuristic']
-    def calculate_heuristic(self,coords,set = True):
-        dist = np.linalg.norm(self.__attrdict['position']-np.asarray(coords))
+    
+    def calculate_heuristic(self,coords,set = True): 
+        dist = np.linalg.norm(self.__attrdict['position'][:-1]-np.asarray(coords)[:-1])
+        dist = dist if dist>1.5 else 0
+        dist = dist+np.linalg.norm(self.__attrdict['position'][-1]-np.asarray(coords)[-1])
         if set:
             self.set_heuristic(dist)
             return dist
@@ -102,7 +105,7 @@ class Maze:
     anime_fig=None
     fig,ax = None,None
     scatter=None
-    def __init__(self,padding = 5,radius = 0,cost:dict = {'-60':1,'-30':1,'0':1,'30':1,'60':1},verbose=True,step = 1) -> None:
+    def __init__(self,padding = 5,radius = 0,cost:dict = {'-60':1,'-30':1,'0':1,'30':1,'60':1},verbose=True, step = 1) -> None:
         self.__cost = cost              ## Cost for each action
         self.__padding = padding+radius ##padding for the robot
         self.__open_list = PriorityQueue()           ##Open list containing the accessable nodes
@@ -143,6 +146,7 @@ class Maze:
         print(('-'*50)+"\n\t\tStarting search\n"+('-'*50))
         ## Set the cost of the start node to zero
         self.__maze[start].set_cost(0)
+        self.__maze[start].set_is_visited()
         ## Apppend the start node and end node into list
         self.__open_list.put(self.__maze[start])
         self.__open_list.put(self.__maze[goal])
@@ -207,6 +211,7 @@ class Maze:
             angle = action/30
             if(angle>11 or angle<0):
                 angle = np.abs(np.abs(angle)-12)
+            print("ori",ori,angle)
             child_node = end_point_idx + (int(angle),)
             parent_node = tuple(node.get_position())
             ## check if the point is in the point in an obstacle
@@ -217,8 +222,8 @@ class Maze:
         pass
     ## Gives the index of the point along a specific angle and magnitude from a given point
     def vec_endpoint(self,start_point, angle, magnitude=1):
-        x = np.cos(np.deg2rad(angle))*magnitude + start_point[0]
-        y = np.sin(np.deg2rad(angle))*magnitude+ start_point[1]
+        x = np.cos(np.deg2rad(angle))*(magnitude*self.thresh_xy) + start_point[0]
+        y = np.sin(np.deg2rad(angle))*(magnitude*self.thresh_xy)+ start_point[1]
         # print(start_point,self.cartisian_cleaner((x,y)),angle)
         if(x<0 or y<0 or x>Maze.lim_y/self.thresh_xy or y > Maze.lim_x/self.thresh_xy):
             return (-1,-1)
@@ -251,7 +256,7 @@ class Maze:
             ## Set the new parent of the node
             self.__maze[child].set_parent(parent)
             ## Set its visited
-            self.__maze[child].set_is_visited()
+            # self.__maze[child].set_is_visited()
             ## Add the node to the open list
             self.__open_list.put(self.__maze[child])
             # print("open list : ",self.__open_list,list(map(Node.get_cost,self.__open_list)))
