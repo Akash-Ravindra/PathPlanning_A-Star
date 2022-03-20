@@ -7,6 +7,8 @@ import math
 from queue import PriorityQueue
 import tkinter
 
+from sympy import true
+
 '''
 Custom data type to store each node
 '''
@@ -119,16 +121,20 @@ class Maze:
 
     def solve_maze(self,start,goal):
         print(('-'*50)+"\n\t\tInitializing Maze\n"+('-'*50))
-        self.__maze = np.array([[[Node([x,y,th],threshold=Maze.thresh_xy)for th in range(12)]
-                                 for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
-                                for x in range(int((Maze.lim_x*(1/Maze.thresh_xy))+1))]
-                               ,dtype=Node) ##Empty np array with X*Y Node objects
-        ## Update the maze array with the presence of the obstacles
+        # self.__maze = np.array([[[Node([x,y,th],threshold=Maze.thresh_xy)for th in range(12)]
+        #                          for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
+        #                         for x in range(int((Maze.lim_x*(1/Maze.thresh_xy))+1))]
+        #                        ,dtype=Node) ##Empty np array with X*Y Node objects
+        # ## Update the maze array with the presence of the obstacles
         
-        self.update_maze_arrow()
-        self.update_maze_circle()
-        self.update_maze_hexagon()
-
+        # self.update_maze_arrow()
+        # self.update_maze_circle()
+        # self.update_maze_hexagon()
+        # return
+        '''np.save("maze",abc,allow_pickle=True)'''
+        
+        self.__maze = np.load('maze.npy',allow_pickle=True)
+        # return
         ## Convert the cartisian coordinates to array frame
         start = self.cartisian_to_idx(list(start)) + (start[-1],)
         goal = self.cartisian_to_idx(list(goal))+ (goal[-1],)
@@ -153,6 +159,7 @@ class Maze:
         self.__open_list.put(self.__maze[start])
         self.__open_list.put(self.__maze[goal])
         ##sort list, look around, pop open list and append to closed list
+        
         while True:
             ## Check if there are still nodes to traverse
             if(self.__open_list.empty()):
@@ -169,10 +176,12 @@ class Maze:
             
             if(self.verbose):
                 print(NoI)
+            
             # self.look_around(NoI.get_position())
             self.perform_actions(NoI, NoI.get_orientation())
             # Add the first node to the closed list and pop it from open list
             self.__close_list.append(NoI)
+            
         return True
     
     
@@ -211,18 +220,15 @@ class Maze:
                 continue
             ## Calculate the plane based on the action taken
             ### NEEDS TO CHANGE
-            angle = action/30
-            if(angle>11 or angle<0):
-                angle = np.abs(np.abs(angle)-12)
-            print("ori",ori,angle)
             
-            
+            angle = (action/30 + 12) % 12
             child_node = end_point_idx + (int(angle),)
             parent_node = tuple(node.get_position())
+            
             ## check if the point is in the point in an obstacle
             if(self.__maze[child_node] and not self.__maze[child_node].get_is_visited()):
                 ## If not then add it to the list
-                # print(child_node,parent_node)
+                print(child_node,parent_node)
                 self.add_to_list(parent_node,child_node,1)
         pass
     ## Gives the index of the point along a specific angle and magnitude from a given point
