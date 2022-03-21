@@ -14,9 +14,9 @@ from sympy import true
 Custom data type to store each node
 '''
 class Node:
-    def __init__(self,position = [0,0,0], parent = None, cost = np.inf, is_visited = False,hue = np.inf):
+    def __init__(self,position = [0,0,0], parent = None, cost = np.inf, is_visited = False,hue = np.inf, hue_thresh = 1.5):
         self.__attrdict = {"position":np.array(position),"parent":np.array(parent),"cost":cost,"is_visited":is_visited,"heuristic":hue }
-
+        self.hue_thresh = hue_thresh
     '''set the position of the state'''
     def set_position(self,position = np.zeros([1,3])):
         self.__attrdict['position'] = np.array(position)
@@ -55,7 +55,7 @@ class Node:
     def calculate_heuristic(self,coords,set = True): 
         ## Euclidian Hue
         dist = np.linalg.norm(self.__attrdict['position'][:-1]-np.asarray(coords)[:-1])
-        dist = dist if dist>(1.5) else 0
+        dist = dist if dist>(self.hue_thresh) else 0
         ## Add goal hue
         dist = dist+np.linalg.norm(self.__attrdict['position'][-1]-np.asarray(coords)[-1])
         if set:
@@ -106,7 +106,7 @@ class Maze:
     lim_x = 250## xlimit in terms of array
     lim_y = 400## Y limit in terms of array
     thresh_xy = 0.5
-    scale = 5
+    scale = 3
     anime_fig=None
     fig,ax = None,None
     scatter=None
@@ -121,7 +121,7 @@ class Maze:
         self.step_size = step
         self.all_see_nodes = []
         print(('-'*50)+"\n\t\tInitializing Maze\n"+('-'*50))
-        self.__maze = np.array([[[Node([x,y,th])for th in range(12)]
+        self.__maze = np.array([[[Node([x,y,th],hue_thresh=self.step_size*1.5)for th in range(12)]
                                  for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
                                 for x in range(int((Maze.lim_x*(1/Maze.thresh_xy))+1))]
                                ,dtype=Node) ##Empty np array with X*Y Node objects
@@ -315,7 +315,7 @@ class Maze:
         xy[0] = (Maze.lim_x - xy[0])*(1/Maze.thresh_xy)
         return (int(xy[0]),int(xy[1]*(1/Maze.thresh_xy)))
     ## HELPER, converts cartisian to tkinter coordinates, top left corner is 0,0 , top right corner is 400,0
-    def cartisian_to_game(self, xy, scale = Maze.scale):
+    def cartisian_to_game(self, xy, scale = 3):
         xy = list(xy)
         xy[1] = Maze.lim_x-xy[1]
         return (scale* xy[0],scale *xy[1])
