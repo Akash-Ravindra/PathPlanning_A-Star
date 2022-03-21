@@ -23,7 +23,7 @@ def get_inputs():
     padding = (args.padding, args.r)
     v = args.output
     return [start,goal,step,padding,v]
-## Excute the methods of the Maze class
+## Execute the methods of the Maze class
 
 def main(start,goal,step,padding,verbose=False):
     

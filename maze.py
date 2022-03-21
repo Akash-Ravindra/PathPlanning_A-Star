@@ -1,5 +1,4 @@
-#import cv2 as cv
-from matplotlib import animation
+
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -8,7 +7,7 @@ import math
 from queue import PriorityQueue
 import tkinter
 import pygame
-from sympy import true
+
 
 '''
 Custom data type to store each node
