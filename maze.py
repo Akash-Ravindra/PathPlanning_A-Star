@@ -1,4 +1,4 @@
-# import cv2 as cv
+#import cv2 as cv
 from matplotlib import animation
 import numpy as np
 import time
@@ -106,6 +106,7 @@ class Maze:
     lim_x = 250## xlimit in terms of array
     lim_y = 400## Y limit in terms of array
     thresh_xy = 0.5
+    scale = 5
     anime_fig=None
     fig,ax = None,None
     scatter=None
@@ -314,10 +315,10 @@ class Maze:
         xy[0] = (Maze.lim_x - xy[0])*(1/Maze.thresh_xy)
         return (int(xy[0]),int(xy[1]*(1/Maze.thresh_xy)))
     ## HELPER, converts cartisian to tkinter coordinates, top left corner is 0,0 , top right corner is 400,0
-    def cartisian_to_game(self, xy):
+    def cartisian_to_game(self, xy, scale = Maze.scale):
         xy = list(xy)
         xy[1] = Maze.lim_x-xy[1]
-        return (xy[0],xy[1])
+        return (scale* xy[0],scale *xy[1])
     
     ## Defines a circle and checks if the idx is within the given circle
     def _is_in_circle(self,idx,radius=40,center=(300,185)):
@@ -556,6 +557,7 @@ class Maze:
             parent = self.__maze[node.get_parent()].get_cartisian()
             child = node.get_cartisian()
             plt.plot((parent[0],child[0]),(parent[1],child[1]), color= 'w', linewidth = 1, alpha=1)
+            
             pass
         pass
         
@@ -575,3 +577,71 @@ class Maze:
         plt.show()
         self.plot_explored_nodes()
         pass
+    
+  
+    
+    def game_display(self):
+        print(('-'*50)+"\n\t\tDisplaying Path\n"+('-'*50))
+        # Initialise all the pygame modules
+        pygame.init()
+        scale = Maze.scale
+        canvas = pygame.display.set_mode((self.lim_y*scale,self.lim_x*scale), pygame.HWSURFACE|pygame.DOUBLEBUF)
+        pygame.display.set_caption("Project 3: Phase -1 A-Star Alogrithm")
+        
+
+        game_running = True
+        not_plotted = True
+        
+       
+        # Game loop
+        while game_running:
+            # Loop through all active events
+            for event in pygame.event.get():
+                # Close the program if the user presses the 'Esc'
+                if event.type == pygame.QUIT:
+                    print("Display window closed. Terminating Program.")
+                    game_running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        print("Escape Key detected. Terminating Program.")
+                        game_running = False  
+                        
+            if not_plotted:
+                # Create Blank Canvas
+                canvas.fill((0,0,0))
+                arrow =  [self.cartisian_to_game([115,210]),self.cartisian_to_game([80,180]),self.cartisian_to_game([105,100]),self.cartisian_to_game([36,185])]
+                hexagon =[self.cartisian_to_game([200,59.58]),self.cartisian_to_game([165,79.7925]),self.cartisian_to_game([165,120.2075]),self.cartisian_to_game([200,140.415]),self.cartisian_to_game([235,120.2075]),self.cartisian_to_game([235,79.7925])]
+                pygame.draw.circle(canvas, (255,0,0), self.cartisian_to_game([300,185]), scale*40)
+                pygame.draw.polygon(canvas, (255,0,0), arrow)
+                pygame.draw.polygon(canvas, (255,0,0), hexagon)
+        
+                all_nodes = self.all_see_nodes
+        
+                for i,node in enumerate(all_nodes):
+                    parent = self.cartisian_to_game(self.__maze[node.get_parent()].get_cartisian())
+                    child = self.cartisian_to_game(node.get_cartisian())
+                    pygame.draw.line(canvas, (0,255,0), parent, child)
+                    pygame.draw.circle(canvas,(0,0,255), child, 1)
+                    pygame.time.delay(4)
+                    pygame.display.update()
+            
+            
+                closed_list = self.path
+                for node in closed_list[1:]:
+                    parent = self.cartisian_to_game(self.__maze[node.get_parent()].get_cartisian())
+                    child = self.cartisian_to_game(node.get_cartisian())
+                    pygame.draw.line(canvas, (255,255,255), parent, child)
+                    pygame.time.delay(10)
+                    pygame.display.update()
+            
+                not_plotted = False
+            
+              
+            
+            
+        
+        pygame.quit()
+    
+        
+        pass
+    
