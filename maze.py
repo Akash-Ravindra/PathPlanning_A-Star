@@ -1,4 +1,4 @@
-import cv2 as cv
+# import cv2 as cv
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -476,16 +476,16 @@ class Maze:
         time.sleep(5)
         Window.destroy()
     # A simple scatter plot to see the path taken by the robot
-    def cv_plot(self):
-        background = np.zeros((250,400),np.uint8)
-        arrow = np.array([[115,210],[80,180],[105,100],[36,185]],np.int32)
-        arrow[:,0] = 250-arrow[:,0]
-        arrow[:,0],arrow[:,1] = arrow[:,1],arrow[:,0]
-        arrow = arrow.reshape((-1,1,2))
-        background = cv.polylines(background,[arrow], True,255,10)
-        cv.imshow("Maze",background)
-        cv.waitKey()
-        cv.destroyAllWindows()
+    # def cv_plot(self):
+    #     background = np.zeros((250,400),np.uint8)
+    #     arrow = np.array([[115,210],[80,180],[105,100],[36,185]],np.int32)
+    #     arrow[:,0] = 250-arrow[:,0]
+    #     arrow[:,0],arrow[:,1] = arrow[:,1],arrow[:,0]
+    #     arrow = arrow.reshape((-1,1,2))
+    #     background = cv.polylines(background,[arrow], True,255,10)
+    #     cv.imshow("Maze",background)
+    #     cv.waitKey()
+    #     cv.destroyAllWindows()
     def simple_plot_path(self):
         ## Create the obstacles
         arrow = patch.Polygon([[115,210],[80,180],[105,100],[36,185]],color="red")
@@ -511,8 +511,8 @@ class Maze:
         plt.show(block=False)
         plt.pause(5)
         plt.close()
-    def full_plot_path(self):
-        ## Create the obstacles
+    def plot_boilerplate(self):
+         ## Create the obstacles
         arrow = patch.Polygon([[115,210],[80,180],[105,100],[36,185]],color="red")
         circle = patch.Circle([300,185],40,color="red")
         Hexagon = patch.Polygon([(200,59.58),(165,79.7925),(165,120.2075),(200,140.415),(235,120.2075),(235,79.7925)],color="red")
@@ -528,7 +528,10 @@ class Maze:
         ax.grid(False)
         plt.xlim((0,Maze.lim_y))
         plt.ylim((0,Maze.lim_x))
-        
+        return fig,ax
+    def full_plot_path(self):
+        ## Create the obstacles
+        fig,ax = self.plot_boilerplate()
         # plot each of the points on the graph
         for i in range(len(self.path)-1):
     
@@ -536,17 +539,22 @@ class Maze:
             u,v = self.path[i+1].get_cartisian() 
             #ax.scatter(x,y,s=1,marker="s",linewidths=0.25,edgecolors=[0,0,0], color = 'blue')
             plt.quiver(x, y, u-x, v-y, units='xy', scale =0.25,  color= 'g', headwidth = 1, headlength=0)
-        # # plot each of the points on the graph
-        # for i in range(len(self.__close_list)-1):
-    
-        #     x1,y1 = self.__close_list[i].get_cartisian()
-        #     u1,v1 = self.__close_list[i+1].get_cartisian() 
-        #     #ax.scatter(x,y,s=1,marker="s",linewidths=0.25,edgecolors=[0,0,0], color = 'blue')
-        #     ax.quiver(x1, y1, u1-x1, v1-y1, units='xy' ,scale=1, color= 'w' )
         plt.title("Maze path using  A-star")
         plt.show(block=False)
         plt.pause(5)
         plt.close()
         
+    def plot_explored_nodes(self):
+        # closed_list = self.get_close_list()
+        closed_list = self.path
+        fig,ax = self.plot_boilerplate()
+        for node in closed_list[1:]:
+            parent = self.__maze[node.get_parent()].get_cartisian()
+            child = node.get_cartisian()
+            plt.plot((parent[0],child[0]),(parent[1],child[1]), color= 'g', linewidth = 1)
+            point = plt.Circle((child[0],child[1]),0.5,color = 'w')
+            ax.add_patch(point)
+            pass
+        pass
         
         
