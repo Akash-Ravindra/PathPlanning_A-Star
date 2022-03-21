@@ -133,7 +133,7 @@ class Maze:
         # return
         '''np.save("maze",abc,allow_pickle=True)'''
         
-        self.__maze = np.load('maze.npy',allow_pickle=True)
+        self.__maze = np.load('../maze.npy',allow_pickle=True)
         # return
         ## Convert the cartisian coordinates to array frame
         start = self.cartisian_to_idx(list(start)) + (start[-1],)
@@ -171,6 +171,7 @@ class Maze:
             
             ## Check for finished condition
             if(self.__maze[self.start_goal[-1]].get_cost()<NoI.get_cost() or NoI.get_heuristic()==0):
+                
                 print("Found the shortest path to ",self.__maze[self.start_goal[-1]].get_cartisian())
                 break
             
@@ -278,7 +279,7 @@ class Maze:
         
     ## getter for open list
     def get_open_list(self):
-        return np.array(self.__open_list)
+        return self.__open_list
     ## getter for close list
     def get_close_list(self):
         return np.array(self.__close_list)
