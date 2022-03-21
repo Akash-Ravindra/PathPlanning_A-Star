@@ -6,7 +6,7 @@ import matplotlib.patches as patch
 import math
 from queue import PriorityQueue
 import tkinter
-
+import pygame
 from sympy import true
 
 '''
@@ -142,14 +142,10 @@ class Maze:
         self.start_goal.append(goal)
         
         ## Check if the start and goal are accessable
-        if(self.start_goal[0][0]<0 or self.start_goal[0][0]>(Maze.lim_x/self.thresh_xy)\
-            or self.start_goal[0][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[0][1]<0 \
-                or self.start_goal[0][2]<0 or self.start_goal[0][2]>11 or type(self.__maze[start])==type(None)):
+        if(not self.idx_in_maze(self.start_goal[0])):
             print("Start Node inside a Obstacle or out of bounds")
             return False
-        if(self.start_goal[-1][0]<0 or self.start_goal[-1][0]>(Maze.lim_x/self.thresh_xy)\
-            or self.start_goal[-1][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[-1][1]<0\
-                or self.start_goal[-1][2]<0 or self.start_goal[-1][2]>11 or type(self.__maze[goal])==type(None)):
+        if(not self.idx_in_maze(self.start_goal[-1])):
             print("Goal Node inside a Obstacle or out of bounds")
             return False
         print(('-'*50)+"\n\t\tStarting search\n"+('-'*50))
@@ -422,7 +418,14 @@ class Maze:
                     mask = (xx-idx)**2 + (yy-idy)**2 - (padding*(1/Maze.thresh_xy))**2<=0
                     self.__maze[mask,:] = None 
         pass
-    
+    def idx_in_maze(self, coords):
+        if (coords[0]<0+self.__padding or coords[0]>(Maze.lim_x/self.thresh_xy)-self.__padding or\
+            coords[1]<0+self.__padding or coords[1]>(Maze.lim_y/self.thresh_xy)-self.__padding or\
+                coords[2]<0 or coords[2]>11 or\
+                    type(self.__maze[coords]) == type(None)):
+                return False
+        else:
+            return True
     # Plot the completed path as an animation
     def game_plot(self):
         ## Define the size of the window
@@ -508,7 +511,46 @@ class Maze:
         for i in self.path:
             x,y = i.get_cartisian()
             ax.scatter(x,y,s=1,marker="s",linewidths=0.25,edgecolors=[0,0,0], color = 'blue')
-        plt.title("Maze path using Dijkstra")
+        plt.title("Maze path using A-star")
         plt.show(block=False)
         plt.pause(5)
         plt.close()
+    def full_plot_path(self):
+        ## Create the obstacles
+        arrow = patch.Polygon([[115,210],[80,180],[105,100],[36,185]],color="red")
+        circle = patch.Circle([300,185],40,color="red")
+        Hexagon = patch.Polygon([(200,59.58),(165,79.7925),(165,120.2075),(200,140.415),(235,120.2075),(235,79.7925)],color="red")
+        ## Add the patches to the ax
+        fig,ax = plt.subplots()
+        ax.set_facecolor((0,0,0))
+        ax.add_patch(arrow)
+        ax.add_patch(circle)
+        ax.add_patch(Hexagon)
+        fig.canvas.toolbar_visible = False
+        fig.canvas.header_visible = False
+        fig.canvas.footer_visible = False
+        ax.grid(False)
+        plt.xlim((0,Maze.lim_y))
+        plt.ylim((0,Maze.lim_x))
+        
+        # plot each of the points on the graph
+        for i in range(len(self.path)-1):
+    
+            x,y = self.path[i].get_cartisian()
+            u,v = self.path[i+1].get_cartisian() 
+            #ax.scatter(x,y,s=1,marker="s",linewidths=0.25,edgecolors=[0,0,0], color = 'blue')
+            plt.quiver(x, y, u-x, v-y, units='xy', scale =0.25,  color= 'g', headwidth = 1, headlength=0)
+        # # plot each of the points on the graph
+        # for i in range(len(self.__close_list)-1):
+    
+        #     x1,y1 = self.__close_list[i].get_cartisian()
+        #     u1,v1 = self.__close_list[i+1].get_cartisian() 
+        #     #ax.scatter(x,y,s=1,marker="s",linewidths=0.25,edgecolors=[0,0,0], color = 'blue')
+        #     ax.quiver(x1, y1, u1-x1, v1-y1, units='xy' ,scale=1, color= 'w' )
+        plt.title("Maze path using  A-star")
+        plt.show(block=False)
+        plt.pause(5)
+        plt.close()
+        
+        
+        
