@@ -142,14 +142,10 @@ class Maze:
         self.start_goal.append(goal)
         
         ## Check if the start and goal are accessable
-        if(self.start_goal[0][0]<0 or self.start_goal[0][0]>(Maze.lim_x/self.thresh_xy)\
-            or self.start_goal[0][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[0][1]<0 \
-                or self.start_goal[0][2]<0 or self.start_goal[0][2]>11 or type(self.__maze[start])==type(None)):
+        if(not self.idx_in_maze(self.start_goal[0])):
             print("Start Node inside a Obstacle or out of bounds")
             return False
-        if(self.start_goal[-1][0]<0 or self.start_goal[-1][0]>(Maze.lim_x/self.thresh_xy)\
-            or self.start_goal[-1][1]>(Maze.lim_y/self.thresh_xy) or self.start_goal[-1][1]<0\
-                or self.start_goal[-1][2]<0 or self.start_goal[-1][2]>11 or type(self.__maze[goal])==type(None)):
+        if(not self.idx_in_maze(self.start_goal[-1])):
             print("Goal Node inside a Obstacle or out of bounds")
             return False
         print(('-'*50)+"\n\t\tStarting search\n"+('-'*50))
@@ -422,7 +418,14 @@ class Maze:
                     mask = (xx-idx)**2 + (yy-idy)**2 - (padding*(1/Maze.thresh_xy))**2<=0
                     self.__maze[mask,:] = None 
         pass
-    
+    def idx_in_maze(self, coords):
+        if (coords[0]<0+self.__padding or coords[0]>(Maze.lim_x/self.thresh_xy)-self.__padding or\
+            coords[1]<0+self.__padding or coords[1]>(Maze.lim_y/self.thresh_xy)-self.__padding or\
+                coords[2]<0 or coords[2]>11 or\
+                    type(self.__maze[coords]) == type(None)):
+                return False
+        else:
+            return True
     # Plot the completed path as an animation
     def game_plot(self):
         ## Define the size of the window
