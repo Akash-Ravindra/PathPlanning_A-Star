@@ -1,4 +1,5 @@
 # import cv2 as cv
+from matplotlib import animation
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -54,7 +55,7 @@ class Node:
     def calculate_heuristic(self,coords,set = True): 
         ## Euclidian Hue
         dist = np.linalg.norm(self.__attrdict['position'][:-1]-np.asarray(coords)[:-1])
-        dist = dist if dist>1.5/Maze.thresh_xy else 0
+        dist = dist if dist>(1.5) else 0
         ## Add goal hue
         dist = dist+np.linalg.norm(self.__attrdict['position'][-1]-np.asarray(coords)[-1])
         if set:
@@ -117,6 +118,7 @@ class Maze:
         self.start_goal = []
         self.verbose = verbose
         self.step_size = step
+        self.all_see_nodes = []
         print(('-'*50)+"\n\t\tInitializing Maze\n"+('-'*50))
         self.__maze = np.array([[[Node([x,y,th])for th in range(12)]
                                  for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
@@ -224,18 +226,19 @@ class Maze:
             parent_node = tuple(node.get_position())
             
             ## check if the point is in the point in an obstacle
-            if(not self.__maze[child_node].get_is_visited()):
+            if(not self.__maze[child_node].get_is_visited() and\
+                not child_node[:-1]==parent_node[:-1]):
                 ## If not then add it to the list
                 self.add_to_list(parent_node,child_node,1)
         pass
     ## Gives the index of the point along a specific angle and magnitude from a given point
     def vec_endpoint(self,start_point, angle, magnitude=1):
-        x = np.cos(np.deg2rad(angle))*(magnitude*self.thresh_xy) + start_point[0]
-        y = np.sin(np.deg2rad(angle))*(magnitude*self.thresh_xy)+ start_point[1]
+        x = np.cos(np.deg2rad(angle))*(magnitude) + start_point[0]
+        y = np.sin(np.deg2rad(angle))*(magnitude)+ start_point[1]
         # print(start_point,self.cartisian_cleaner((x,y)),angle)
         
         ### NEED TO CHeck
-        if(x<0 or y<0 or x>Maze.lim_y/self.thresh_xy or y > Maze.lim_x/self.thresh_xy):
+        if(not self.idx_in_maze(self.cartisian_to_idx((x,y))+(0,))):
             return (-1,-1)
         
         return self.cartisian_to_idx((x,y))
@@ -271,6 +274,7 @@ class Maze:
             # self.__maze[child].set_is_visited()
             ## Add the node to the open list
             self.__open_list.put(self.__maze[child])
+            self.all_see_nodes.append(self.__maze[child])
             # print("open list : ",self.__open_list,list(map(Node.get_cost,self.__open_list)))
         
     ## getter for open list
@@ -547,14 +551,27 @@ class Maze:
     def plot_explored_nodes(self):
         # closed_list = self.get_close_list()
         closed_list = self.path
-        fig,ax = self.plot_boilerplate()
+        # fig,ax = self.plot_boilerplate()
         for node in closed_list[1:]:
             parent = self.__maze[node.get_parent()].get_cartisian()
             child = node.get_cartisian()
-            plt.plot((parent[0],child[0]),(parent[1],child[1]), color= 'g', linewidth = 1)
-            point = plt.Circle((child[0],child[1]),0.5,color = 'w')
-            ax.add_patch(point)
+            plt.plot((parent[0],child[0]),(parent[1],child[1]), color= 'w', linewidth = 1, alpha=1)
             pass
         pass
         
-        
+    def plot_all_nodes(self):
+        # closed_list = self.get_close_list()
+        all_nodes = self.all_see_nodes
+        fig,ax = self.plot_boilerplate()
+        for i,node in enumerate(all_nodes):
+            parent = self.__maze[node.get_parent()].get_cartisian()
+            child = node.get_cartisian()
+            plt.plot((parent[0],child[0]),(parent[1],child[1]), color= 'g', linewidth = 1, alpha=0.5)
+            point = plt.Circle((child[0],child[1]),0.5,color = 'b')
+            ax.add_patch(point)
+            if(not i%10):
+                plt.pause(0.1)
+            pass
+        plt.show()
+        self.plot_explored_nodes()
+        pass
