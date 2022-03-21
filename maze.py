@@ -13,9 +13,8 @@ from sympy import true
 Custom data type to store each node
 '''
 class Node:
-    def __init__(self,position = [0,0,0], parent = None, cost = np.inf,is_visited = None,hue = np.inf, threshold = 0.5):
+    def __init__(self,position = [0,0,0], parent = None, cost = np.inf, is_visited = False,hue = np.inf):
         self.__attrdict = {"position":np.array(position),"parent":np.array(parent),"cost":cost,"is_visited":is_visited,"heuristic":hue }
-        self.thresh = threshold
 
     '''set the position of the state'''
     def set_position(self,position = np.zeros([1,3])):
@@ -55,7 +54,7 @@ class Node:
     def calculate_heuristic(self,coords,set = True): 
         ## Euclidian Hue
         dist = np.linalg.norm(self.__attrdict['position'][:-1]-np.asarray(coords)[:-1])
-        dist = dist if dist>1.5/self.thresh else 0
+        dist = dist if dist>1.5/Maze.thresh_xy else 0
         ## Add goal hue
         dist = dist+np.linalg.norm(self.__attrdict['position'][-1]-np.asarray(coords)[-1])
         if set:
@@ -121,20 +120,21 @@ class Maze:
 
     def solve_maze(self,start,goal):
         print(('-'*50)+"\n\t\tInitializing Maze\n"+('-'*50))
-        # self.__maze = np.array([[[Node([x,y,th],threshold=Maze.thresh_xy)for th in range(12)]
-        #                          for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
-        #                         for x in range(int((Maze.lim_x*(1/Maze.thresh_xy))+1))]
-        #                        ,dtype=Node) ##Empty np array with X*Y Node objects
-        # ## Update the maze array with the presence of the obstacles
+        self.__maze = np.array([[[Node([x,y,th])for th in range(12)]
+                                 for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
+                                for x in range(int((Maze.lim_x*(1/Maze.thresh_xy))+1))]
+                               ,dtype=Node) ##Empty np array with X*Y Node objects
+        ## Update the maze array with the presence of the obstacles
         
-        # self.update_maze_arrow()
-        # self.update_maze_circle()
-        # self.update_maze_hexagon()
+        self.update_maze_arrow()
+        self.update_maze_circle()
+        self.update_maze_hexagon()
+       
+        # '''np.save("maze",abc,allow_pickle=True)'''
         # return
-        '''np.save("maze",abc,allow_pickle=True)'''
+        # self.__maze = np.load('../maze.npy',allow_pickle=True)
         
-        self.__maze = np.load('../maze.npy',allow_pickle=True)
-        # return
+        
         ## Convert the cartisian coordinates to array frame
         start = self.cartisian_to_idx(list(start)) + (start[-1],)
         goal = self.cartisian_to_idx(list(goal))+ (goal[-1],)
@@ -172,6 +172,7 @@ class Maze:
             ## Check for finished condition
             if(self.__maze[self.start_goal[-1]].get_cost()<NoI.get_cost() or NoI.get_heuristic()==0):
                 self.new_goal = NoI
+                self.start_goal[-1] = tuple(NoI.get_position().tolist())
                 print("Found the shortest path to ",self.__maze[self.start_goal[-1]].get_cartisian())
                 break
             
@@ -189,8 +190,9 @@ class Maze:
     
     
     ## Back track from the goal to the start node to find the path the robot needs to take
-    def back_track(self, coords = None):
+    def back_track(self):
         self.path.clear()
+        
         ## Check if the goal was reached
         if(self.__maze[self.start_goal[-1]].get_cost()==np.inf or self.__maze[self.start_goal[-1]].get_parent() is None):
             print("No path from Start to goal")
@@ -198,10 +200,8 @@ class Maze:
         
         print("\n""\n""\n"+('-'*50)+"\n\t\tStarting BackTrack\n"+('-'*50)+"\n")
         ## Iteratively access the parents for each child node
-        if coords:
-            self.path.append(self.__maze[coords])        
-        else:
-            self.path.append(self.__maze[self.start_goal[-1]]) 
+        self.path.append(self.__maze[self.start_goal[-1]]) 
+        
         while True:
             node = self.path[-1]
             self.path.append(self.__maze[tuple(node.get_parent())])
@@ -234,7 +234,6 @@ class Maze:
             ## check if the point is in the point in an obstacle
             if(self.__maze[child_node] and not self.__maze[child_node].get_is_visited()):
                 ## If not then add it to the list
-                print(child_node,parent_node)
                 self.add_to_list(parent_node,child_node,1)
         pass
     ## Gives the index of the point along a specific angle and magnitude from a given point
