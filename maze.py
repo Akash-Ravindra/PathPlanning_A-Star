@@ -171,7 +171,7 @@ class Maze:
             
             ## Check for finished condition
             if(self.__maze[self.start_goal[-1]].get_cost()<NoI.get_cost() or NoI.get_heuristic()==0):
-                
+                self.new_goal = NoI
                 print("Found the shortest path to ",self.__maze[self.start_goal[-1]].get_cartisian())
                 break
             
@@ -183,11 +183,13 @@ class Maze:
             # Add the first node to the closed list and pop it from open list
             self.__close_list.append(NoI)
             
+            
+            
         return True
     
     
     ## Back track from the goal to the start node to find the path the robot needs to take
-    def back_track(self):
+    def back_track(self, coords = None):
         self.path.clear()
         ## Check if the goal was reached
         if(self.__maze[self.start_goal[-1]].get_cost()==np.inf or self.__maze[self.start_goal[-1]].get_parent() is None):
@@ -196,7 +198,10 @@ class Maze:
         
         print("\n""\n""\n"+('-'*50)+"\n\t\tStarting BackTrack\n"+('-'*50)+"\n")
         ## Iteratively access the parents for each child node
-        self.path.append(self.__maze[self.start_goal[-1]])
+        if coords:
+            self.path.append(self.__maze[coords])        
+        else:
+            self.path.append(self.__maze[self.start_goal[-1]]) 
         while True:
             node = self.path[-1]
             self.path.append(self.__maze[tuple(node.get_parent())])
