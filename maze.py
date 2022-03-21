@@ -117,8 +117,6 @@ class Maze:
         self.start_goal = []
         self.verbose = verbose
         self.step_size = step
-
-    def solve_maze(self,start,goal):
         print(('-'*50)+"\n\t\tInitializing Maze\n"+('-'*50))
         self.__maze = np.array([[[Node([x,y,th])for th in range(12)]
                                  for y in range(int((Maze.lim_y*(1/Maze.thresh_xy))+1))]
@@ -129,12 +127,11 @@ class Maze:
         self.update_maze_arrow()
         self.update_maze_circle()
         self.update_maze_hexagon()
-       
         # '''np.save("maze",abc,allow_pickle=True)'''
         # return
         # self.__maze = np.load('../maze.npy',allow_pickle=True)
-        
-        
+
+    def solve_maze(self,start,goal):   
         ## Convert the cartisian coordinates to array frame
         start = self.cartisian_to_idx(list(start)) + (start[-1],)
         goal = self.cartisian_to_idx(list(goal))+ (goal[-1],)
@@ -148,6 +145,8 @@ class Maze:
         if(not self.idx_in_maze(self.start_goal[-1])):
             print("Goal Node inside a Obstacle or out of bounds")
             return False
+        
+        
         print(('-'*50)+"\n\t\tStarting search\n"+('-'*50))
         ## Set the cost of the start node to zero
         self.__maze[start].set_cost(0)
@@ -216,19 +215,16 @@ class Maze:
         for action in actions:
             ## Get the next point based on the current point and the action angle
             end_point_idx = self.vec_endpoint(node.get_cartisian(),action,self.step_size)
-            ## Check if the point is in the maze
-            if(end_point_idx[0]<0 or end_point_idx[0]>(self.lim_x/self.thresh_xy) \
-               or end_point_idx[1]<0 or end_point_idx[1]>(self.lim_y/self.thresh_xy)):
-                continue
             ## Calculate the plane based on the action taken
-            ### NEEDS TO CHANGE
-            
             angle = (action/30 + 12) % 12
             child_node = end_point_idx + (int(angle),)
+             ## Check if the point is in the maze
+            if(not self.idx_in_maze(child_node)):
+                continue
             parent_node = tuple(node.get_position())
             
             ## check if the point is in the point in an obstacle
-            if(self.__maze[child_node] and not self.__maze[child_node].get_is_visited()):
+            if(not self.__maze[child_node].get_is_visited()):
                 ## If not then add it to the list
                 self.add_to_list(parent_node,child_node,1)
         pass
@@ -419,8 +415,8 @@ class Maze:
                     self.__maze[mask,:] = None 
         pass
     def idx_in_maze(self, coords):
-        if (coords[0]<0+self.__padding or coords[0]>(Maze.lim_x/self.thresh_xy)-self.__padding or\
-            coords[1]<0+self.__padding or coords[1]>(Maze.lim_y/self.thresh_xy)-self.__padding or\
+        if (coords[0]<0+self.__padding/Maze.thresh_xy or coords[0]>((Maze.lim_x-self.__padding)/self.thresh_xy) or\
+            coords[1]<0+self.__padding/Maze.thresh_xy or coords[1]>((Maze.lim_y-self.__padding)/self.thresh_xy) or\
                 coords[2]<0 or coords[2]>11 or\
                     type(self.__maze[coords]) == type(None)):
                 return False
