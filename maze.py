@@ -620,8 +620,8 @@ class Maze:
                 for i,node in enumerate(all_nodes):
                     parent = self.cartisian_to_game(self.__maze[node.get_parent()].get_cartisian())
                     child = self.cartisian_to_game(node.get_cartisian())
-                    pygame.draw.line(canvas, (0,0,255,100), parent, child)
-                    pygame.draw.circle(canvas,(255,255,0,100), child, 1)
+                    pygame.draw.line(canvas, (0,0,255,0), parent, child)
+                    pygame.draw.circle(canvas,(255,255,0,0), child, 1)
                     pygame.time.delay(4)
                     pygame.display.update()
             

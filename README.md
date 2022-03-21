@@ -1,30 +1,36 @@
-# PathPlanning_A-Star
 
-# PathFinder_Dijkstra
+
+# PathPlanning_A-Star
 
 ## Requirements
 - tkinter - tk=8.6.10=hbc83047_0
 - numpy
 - matplotlib
+- sympy
+- pygame
 - Also included is a requirements.txt for dependencies
 ---
 ## Instructions 
 -    To run the file simply run the command 
 ```shell
-    python Dijkstra-pathplanning-Akash-Ravindra.py
+    python main.py
 ```
- -   The above command will run the file with default start and goal nodes, that is, (0,0) and (400,250)
+ -   The above command will run the file with default start and goal nodes, that is, (15,15) and (385, 235).
 
 To run the robot from a desired location, use the following commnd
 ```shell
-    python Dijkstra-pathplanning-Akash-Ravindra.py -x0 a -y0 b -x1 c -y1 d
+    python main.py -xs a -ys b -ths c -xg d -yg e -thg f -stp g -padding h -r i -o 
 ```
-Where a,b,c,d are integer values of the x,y coordinates of start and goal node respectively.
+Where a,b,c and d,e,f are integer values of the x,y and theta coordinates of start and goal node respectively. 
 
-For further information 
+g is the minimum step size the robot can take, h is the minimum distance from obstacles and boundaries. 
+
+i is the radius of the robot. -o or --output turns on verbose.
+
+For further information:
 ```bash
-    python Dijkstra-pathplanning-Akash-Ravindra.py --help
+    python main.py --help
 ```
 
 ## Github link
-[Github](https://github.com/Akash-Ravindra/PathFinder_Dijkstra/tree/main)
+[Github](https://github.com/Akash-Ravindra/PathPlanning_A-Star/tree/threeD)
