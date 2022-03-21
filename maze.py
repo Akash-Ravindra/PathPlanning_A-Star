@@ -130,6 +130,7 @@ class Maze:
         self.update_maze_arrow()
         self.update_maze_circle()
         self.update_maze_hexagon()
+        # self.update_maze_borders()
         # '''np.save("maze",abc,allow_pickle=True)'''
         # return
         # self.__maze = np.load('../maze.npy',allow_pickle=True)
@@ -358,6 +359,12 @@ class Maze:
         else:
             
             return False
+    def update_maze_borders(self):
+        self.__maze[:,0:self.__padding/Maze.thresh_xy] = None
+        self.__maze[0:self.__padding/Maze.thresh_xy,:] = None
+        self.__maze[-(self.__padding/Maze.thresh_xy):,:] = None
+        self.__maze[0:self.__padding/Maze.thresh_xy,:] = None
+        pass
     ## Check each element of the maze that falls in the bounding box of the obstacle 
     def update_maze_circle(self,radius=40,center=(300,185)):
         ## Bounding box
