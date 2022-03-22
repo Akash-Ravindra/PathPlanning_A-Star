@@ -34,4 +34,4 @@ For further information:
 ```
 ____
 ## Github link
-[Github](https://github.com/Akash-Ravindra/PathPlanning_A-Star/tree/threeD)
+[Github](https://github.com/Akash-Ravindra/PathPlanning_A-Star/tree/main)
