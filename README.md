@@ -2,7 +2,9 @@
 
 # PathPlanning_A-Star
 ***Note - The animation in the video file attached starts from the 45th second. Please be patient.***
-
+## Team Members
+ - Akash Ravindra(aravind2@umd.edu), UID 117422085
+ - Manu M Pillai(manump@umd.edu), UID 117817928
 ## Requirements
 - tkinter - tk=8.6.10=hbc83047_0
 - numpy
