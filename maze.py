@@ -136,6 +136,8 @@ class Maze:
 
     def solve_maze(self,start,goal):   
         ## Convert the cartisian coordinates to array frame
+        start = start[:-1]+(int((start[-1]/30 + 12)%12),)
+        goal = goal[:-1]+(int((goal[-1]/30 + 12)%12),)
         start = self.cartisian_to_idx(list(start)) + (start[-1],)
         goal = self.cartisian_to_idx(list(goal))+ (goal[-1],)
         self.start_goal.append(start)
